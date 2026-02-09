@@ -86,11 +86,38 @@ Results are saved to the `output/` directory:
 - `{target}_{feature_set}_results.csv` — metrics with bootstrap 95% CIs (AUC, sensitivity, specificity, DR@10%FPR, DR@20%FPR, Brier score, calibration slope/intercept)
 - `{target}_{feature_set}_roc.png` — ROC curves for all evaluated models
 
-## Performance Notes
+## Model Comparison
 
-- **LR, ETC, VC**: Fast (seconds per CV run on 4644 samples)
-- **GPC**: Slow (~500s for 10 folds on 4644 samples)
-- **SC**: Slowest (uses GPC as both base and meta-learner)
+### How each model works
+
+- **LR (Logistic Regression)** — Draws a linear boundary to separate PE from non-PE. Each feature gets a weight (e.g., "higher MAP increases PE risk by X"). Outputs probability directly from a formula.
+- **ETC (Extra Trees Classifier)** — Ensemble of 100 random decision trees with randomized split points. Captures non-linear patterns and feature interactions automatically.
+- **VC (Voting Classifier)** — Combines Random Forest + Extra Trees and averages their predicted probabilities (soft voting). Two ensembles making different mistakes cancel out each other's errors.
+- **GPC (Gaussian Process Classifier)** — Probabilistic model that measures similarity between patients using an RBF kernel. Produces well-calibrated probabilities with uncertainty estimates. O(n^3) time complexity.
+- **SC (Stacking Classifier)** — Two-level architecture. Level 1: SVM + ETC + GPC each make predictions. Level 2: a GPC meta-learner takes those predictions as inputs and makes the final decision.
+
+### Results from the paper (4644 samples, full feature set)
+
+| Metric | LR | ETC | VC | GPC | SC |
+|--------|-----|-----|-----|-----|-----|
+| **AUC (all PE)** | 0.824 | 0.817 | 0.831 | 0.832 | 0.825 |
+| **AUC (preterm PE)** | 0.851 | 0.855 | **0.884** | 0.878 | 0.857 |
+| **DR@10%FPR (preterm PE)** | 0.567 | 0.537 | **0.625** | 0.593 | 0.555 |
+| **Speed (10 folds)** | **~0.1s** | ~1.3s | ~3.5s | ~500s | ~2000s+ |
+| **Interpretability** | **high** | low | low | low | very low |
+| **Non-linear patterns** | no | yes | yes | yes | yes |
+| **Scalability** | excellent | good | good | poor (O(n^3)) | very poor |
+| **Calibration** | good | moderate | moderate | **best** | moderate |
+
+### Key takeaways
+
+1. **VC is the best performer for preterm PE** — best AUC (0.884) and DR@10%FPR (0.625), catching 62.5% of preterm PE cases while only flagging 10% of healthy women.
+2. **For all PE, models perform similarly** — AUCs cluster around 0.82-0.83; differences are within confidence intervals.
+3. **GPC adds almost nothing over VC** despite being ~150x slower. Its one advantage is better probability calibration.
+4. **SC underperforms expectations** — with only 49 preterm PE cases, the meta-learner overfits its own internal CV rather than learning which base model to trust.
+5. **LR is the best value** — 95% of VC's performance at 0.3% of the compute time, and fully interpretable.
+
+**Practical recommendation**: Use **VC** as the primary screening model and **LR** for clinical explainability. GPC and SC are not worth the compute cost for this dataset size.
 
 For quick iteration, use `--models LR ETC VC` and a small `--n-repeats`.
 
