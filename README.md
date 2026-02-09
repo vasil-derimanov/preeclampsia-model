@@ -26,7 +26,8 @@ src/
     evaluation.py        # Metrics, ROC plots, calibration, SHAP
     pipeline.py          # Repeated CV, bootstrap CI, hyperparameter tuning
 data/
-    .gitkeep             # Placeholder for real dataset (CSV)
+    template.csv         # CSV template to share with clinical team
+    .gitkeep             # Placeholder for real dataset
 ```
 
 ## Setup
@@ -51,7 +52,46 @@ python main.py --synthetic
 python main.py --data data/your_dataset.csv
 ```
 
-The CSV should contain columns matching the feature names in `src/config.py`, plus target columns (`pe_all`, `preterm_pe`, `term_pe`).
+A template CSV is provided at `data/template.csv`. Share it with your clinical team to fill in. The expected columns are:
+
+**Maternal characteristics**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `maternal_age` | number | Age in years (e.g., 29.5) |
+| `height` | number | Height in cm (e.g., 162) |
+| `pre_pregnancy_weight` | number | Weight in kg before pregnancy (e.g., 57) |
+| `nulliparous` | 0 or 1 | First pregnancy = 1, not first = 0 |
+| `conception_method` | text | `natural`, `ovulation_induction`, or `ivf_et` |
+| `family_history_pe` | 0 or 1 | Family history of preeclampsia |
+| `smoking` | 0 or 1 | Smoking status |
+
+**Medical history**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `history_pe` | 0 or 1 | Previous preeclampsia |
+| `history_chronic_hypertension` | 0 or 1 | Chronic hypertension |
+| `history_chronic_kidney_disease` | 0 or 1 | Chronic kidney disease |
+| `history_diabetes` | 0 or 1 | Type 1 or type 2 diabetes |
+| `history_sle_aps` | 0 or 1 | SLE or antiphospholipid syndrome |
+
+**Biomarkers (measured at 11-13+6 weeks' gestation)**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `map_mmhg` | number | Mean arterial pressure in mmHg (e.g., 82.6) |
+| `uta_pi` | number | Uterine artery pulsatility index (e.g., 1.80) |
+| `papp_a` | number | PAPP-A in IU/L (e.g., 4.56) |
+| `plgf` | number | Placental growth factor in pg/mL (e.g., 33.8) |
+
+**Outcomes**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `pe_all` | 0 or 1 | Developed any preeclampsia |
+| `preterm_pe` | 0 or 1 | Developed preterm PE (delivery <37 weeks) |
+| `term_pe` | 0 or 1 | Developed term PE (delivery >=37 weeks) |
 
 ### CLI options
 
