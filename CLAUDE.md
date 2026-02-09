@@ -32,5 +32,5 @@ Validation approach: 5-fold cross-validation with 80/20 train-test split. Key me
 
 ## Environment
 
-- **Language:** Python 3.9
+- **Language:** Python 3.14
 - **IDE:** PyCharm (JetBrains)
